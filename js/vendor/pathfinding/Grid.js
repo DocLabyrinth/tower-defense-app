@@ -81,8 +81,6 @@ Grid.prototype._buildNodes = function(width, height, matrix) {
 
 
 Grid.prototype.getNodeAt = function(x, y) {
-    console.log('nodes', this.nodes)
-    console.log(y, 'column', this.nodes[y])
     return this.nodes[y][x];
 };
 
