@@ -8,7 +8,7 @@ var devFlagPlugin = new webpack.DefinePlugin({
 
 // Phaser webpack config
 var phaserModule = path.join(__dirname, '/node_modules/phaser/');
-var phaser = path.join(phaserModule, 'build/custom/phaser-no-physics.js');
+var phaser = path.join(phaserModule, 'build/custom/phaser-arcade-physics.js');
 var pixi = path.join(phaserModule, 'build/custom/pixi.js');
 
 module.exports = {
@@ -36,7 +36,7 @@ module.exports = {
       { test: /\.js$/, loaders: ['babel'], exclude: /node_modules/ },
       { test: /\.css$/, loader: ExtractTextPlugin.extract('css-loader?module!cssnext-loader') },
       { test: /pixi\.js/, loader: 'expose?PIXI' },
-      { test: /phaser-no-physics\.js$/, loader: 'expose?Phaser' },
+      { test: /phaser-.*\.js$/, loader: 'expose?Phaser' },
     ]
   },
   resolve: {
