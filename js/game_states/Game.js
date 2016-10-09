@@ -56,28 +56,56 @@ export default class Game {
     this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
   }
 
+  drawLine(canvas, startX, startY, endX, endY, colour = '#000000', thickness = 1) {
+    canvas.beginFill(colour);
+    canvas.lineStyle(thickness, colour, 1);
+    canvas.moveTo(startX, startY);
+    canvas.lineTo(endX, endY);
+    canvas.endFill();
+  }
+
   createInitialBackground() {
     this.game.stage.backgroundColor = "#000000"
 
+    let gridRealW = this.gridW * this.tileSide,
+      gridRealH = this.gridH * this.tileSide,
+      tileSprite = this.make.sprite(0, 0, 'backgroundTiles'),
+      gridGraphics = this.game.make.graphics(this.gridRealW, this.gridRealH)
+
+    // the default background is generic green grass
+    tileSprite.frame = 4
+
     this.backgroundTexture = this.game.add.renderTexture(
-      this.gridW * this.tileSide,
-      this.gridH * this.tileSide,
+      gridRealW,
+      gridRealH,
       'backgroundTexture'
     );
 
-    let tileSprite = this.make.sprite(0, 0, 'backgroundTiles');
-
-    tileSprite.frame = 4
 
     range(this.grid.width).forEach((x) => {
       range(this.grid.height).forEach((y) => {
+        let tileX = x * this.tileSide
+        let tileY = y * this.tileSide
+
+        // horizontal gridline
+        this.drawLine(gridGraphics, 0, tileY, this.game.width, tileY)
+
+        // vertical gridline
+        this.drawLine(gridGraphics, tileX, 0, tileX, this.game.height)
+
         this.backgroundTexture.renderXY(
           tileSprite,
-          x * this.tileSide,
-          y * this.tileSide
+          tileX,
+          tileY
         );
       })
     })
+
+    this.backgroundTexture.renderXY(
+      gridGraphics,
+      0,
+      0
+    );
 
     this.game.add.sprite(0, 0, this.backgroundTexture);
   }
