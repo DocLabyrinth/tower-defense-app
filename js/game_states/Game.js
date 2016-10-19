@@ -1,5 +1,9 @@
 import Grid from '../vendor/pathfinding/Grid'
 import findPathAsync from '../utils/breadth-first'
+import * as moneyActions from '../actions/money'
+import * as towerActions from '../actions/towers'
+import * as TowerTypes from '../constants/TowerTypes';
+import configureStore from '../store/configureStore';
 import range from 'lodash/range'
 import floor from 'lodash/floor'
 
@@ -23,6 +27,8 @@ export default class Game {
     // this.physics;	//	the physics manager
     // this.rnd;		//	the repeatable random number generator
 
+    this.store = configureStore();
+
     this.gridW = 20
     this.gridH = 10
     this.tileSide = 64
@@ -38,6 +44,8 @@ export default class Game {
     }
 
     this.grid = new Grid(this.gridW, this.gridH)
+
+    this.initialised = false;
   }
 
   preload() {
@@ -54,6 +62,37 @@ export default class Game {
   create() {
     this.createInitialBackground()
     this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+
+    this.initPromise = findPathAsync(this.exitPoint.x, this.exitPoint.y, this.grid)
+    this.initPromise.then((initialGrid) => {
+      this.initialised = true
+      this.input.onDown.add(this.clickHandler, this);
+    })
+  }
+
+  clickHandler(pointer) {
+    const {positionDown: {x: clickX, y: clickY}} = pointer
+    const gridPos = this.getGridSquare(clickX, clickY)
+    const action = towerActions.buildTower(
+      TowerTypes.DEFAULT_TOWER_TYPE,
+      gridPos
+    )
+
+    try {
+      this.store.dispatch(action)
+    }
+    catch(e) {
+      console.log('failed to build tower', e)
+      return
+    }
+
+    var tower = this.add.sprite(
+      gridPos.x * this.tileSide,
+      gridPos.y * this.tileSide,
+      'backgroundTiles'
+    )
+
+    tower.frame = 22
   }
 
   drawLine(canvas, startX, startY, endX, endY, colour = '#000000', thickness = 1) {
@@ -62,6 +101,13 @@ export default class Game {
     canvas.moveTo(startX, startY);
     canvas.lineTo(endX, endY);
     canvas.endFill();
+  }
+
+  getGridSquare(x, y) {
+    return {
+      x: floor(x/this.tileSide),
+      y: floor(y/this.tileSide)
+    }
   }
 
   createInitialBackground() {
@@ -80,7 +126,6 @@ export default class Game {
       gridRealH,
       'backgroundTexture'
     );
-
 
     range(this.grid.width).forEach((x) => {
       range(this.grid.height).forEach((y) => {

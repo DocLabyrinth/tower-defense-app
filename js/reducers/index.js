@@ -1,1 +1,2 @@
-export {default as Sample} from './Sample';
+export {default as towers} from './towers';
+export {default as money} from './money';

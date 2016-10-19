@@ -1,4 +1,5 @@
-export const DATA_FETCHED = 'DATA_FETCHED';
-export const DATA_SUCCEEDED = 'DATA_SUCCEEDED';
-export const DATA_FAILED = 'DATA_FAILED';
-export const TITLE_CHANGED = 'TITLE_CHANGED';
+export const BUILD_TOWER = 'BUILD_TOWER';
+export const BLOCK_GRID_SQUARE = 'BLOCK_GRID_SQUARE';
+
+export const ADD_MONEY = 'ADD_MONEY'
+export const SPEND_MONEY = 'SPEND_MONEY'
