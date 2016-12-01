@@ -1,1 +1,1 @@
-export class TowerBuildError extends Error {}
+export class TowerError extends Error {}

@@ -2,8 +2,10 @@ import Grid from '../vendor/pathfinding/Grid'
 import findPathAsync from '../utils/breadth-first'
 import * as moneyActions from '../actions/money'
 import * as towerActions from '../actions/towers'
-import * as TowerTypes from '../constants/TowerTypes';
-import configureStore from '../store/configureStore';
+import * as TowerStates from '../constants/TowerStates'
+import * as TowerTypes from '../constants/TowerTypes'
+import configureStore from '../store/configureStore'
+import {towerObjKey} from '../reducers/towers'
 import range from 'lodash/range'
 import floor from 'lodash/floor'
 
@@ -27,7 +29,9 @@ export default class Game {
     // this.physics;	//	the physics manager
     // this.rnd;		//	the repeatable random number generator
 
-    this.store = configureStore();
+    this.store = configureStore()
+
+    this.towerSprites = {}
 
     this.gridW = 20
     this.gridH = 10
@@ -46,6 +50,7 @@ export default class Game {
     this.grid = new Grid(this.gridW, this.gridH)
 
     this.initialised = false;
+    this.isCalculatingPath = false;
   }
 
   preload() {
@@ -67,32 +72,99 @@ export default class Game {
     this.initPromise.then((initialGrid) => {
       this.initialised = true
       this.input.onDown.add(this.clickHandler, this);
+      this.updateTowerSpritesUnsubscribe = this.store.subscribe(this.updateTowerSprites.bind(this))
     })
+  }
+
+  shutdown() {
+    if(this.updateTowerSpritesUnsubscribe) {
+      this.updateTowerSpritesUnsubscribe()
+    }
   }
 
   clickHandler(pointer) {
     const {positionDown: {x: clickX, y: clickY}} = pointer
     const gridPos = this.getGridSquare(clickX, clickY)
-    const action = towerActions.buildTower(
-      TowerTypes.DEFAULT_TOWER_TYPE,
-      gridPos
-    )
+    const {
+      towers: {
+        [towerObjKey(gridPos.x, gridPos.y)]: currentTower
+      }
+    } = this.store.getState()
 
-    try {
-      this.store.dispatch(action)
-    }
-    catch(e) {
-      console.log('failed to build tower', e)
+    if(gridPos.x >= this.gridW || gridPos.y >= this.gridH) {
+      // click was outside the game area
       return
     }
 
-    var tower = this.add.sprite(
-      gridPos.x * this.tileSide,
-      gridPos.y * this.tileSide,
-      'backgroundTiles'
-    )
+    if(this.isCalculatingPath) {
+      // an existing path calculation is already in progress
+      return
+    }
 
-    tower.frame = 22
+    if(currentTower) {
+      // TODO: select the tower when it's clicked
+      return
+    }
+
+     this.isCalculatingPath = true
+
+    // check if building a tower here would block the path to the exit
+    let blockTestGrid = this.grid.clone()
+    blockTestGrid.setWalkableAt(gridPos.x, gridPos.y, false)
+
+
+    findPathAsync(this.exitPoint.x, this.exitPoint.y, blockTestGrid).then((newGrid) => {
+      this.isCalculatingPath = false
+
+      let startNode = newGrid.getNodeAt(this.spawnPoint.x, this.spawnPoint.y)
+      let targetNode =
+
+      if(!startNode.opened) {
+        console.log('this tower would block the path, not building it :P')
+        return
+      }
+
+      try {
+        this.store.dispatch(towerActions.towerBuild(
+          gridPos,
+          TowerTypes.DEFAULT_TOWER_TYPE
+        ))
+      }
+      catch(e) {
+        console.log('failed to build tower', e)
+        return
+      }
+
+      // replace the grid once everything is finished
+      this.grid = blockTestGrid
+    })
+  }
+
+  updateTowerSprites() {
+    const {towers} = this.store.getState()
+
+    // check which towers have been placed but still need to have a sprite added
+    Object.values(towers)
+      .filter((tower) => tower.state == TowerStates.TOWER_NEW)
+      .forEach((tower) => {
+        let newSprite = this.add.sprite(
+          tower.position.x * this.tileSide,
+          tower.position.y * this.tileSide,
+          'backgroundTiles'
+        )
+
+        let positionKey = towerObjKey(tower.position.x, tower.position.y)
+
+        let action = towerActions.towerStateChange(
+          tower.position,
+          TowerStates.TOWER_READY
+        )
+
+        newSprite.frame = 22
+        this.towerSprites[positionKey] = newSprite
+
+        this.store.dispatch(action)
+      })
   }
 
   drawLine(canvas, startX, startY, endX, endY, colour = '#000000', thickness = 1) {

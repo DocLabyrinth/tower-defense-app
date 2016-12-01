@@ -1,5 +1,6 @@
-export const BUILD_TOWER = 'BUILD_TOWER';
-export const BLOCK_GRID_SQUARE = 'BLOCK_GRID_SQUARE';
+export const TOWER_BUILD = 'TOWER_BUILD';
+export const TOWER_STATE_CHANGE = 'TOWER_STATE_CHANGE';
+export const GRID_SQUARE_BLOCK = 'GRID_SQUARE_BLOCK';
 
-export const ADD_MONEY = 'ADD_MONEY'
-export const SPEND_MONEY = 'SPEND_MONEY'
+export const MONEY_ADD = 'MONEY_ADD'
+export const MONEY_SPEND = 'MONEY_SPEND'

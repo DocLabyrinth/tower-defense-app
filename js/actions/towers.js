@@ -1,6 +1,7 @@
 import { createActions } from 'redux-actions';
 import * as ActionTypes from '../constants/ActionTypes';
 
-export const { buildTower } = createActions({
-  [ActionTypes.BUILD_TOWER]: (type, position) => ({type, position}),
+export const { towerBuild, towerStateChange } = createActions({
+  [ActionTypes.TOWER_BUILD]: (position, type) => ({type, position}),
+  [ActionTypes.TOWER_STATE_CHANGE]: (position, towerState) => ({position, towerState}),
 })

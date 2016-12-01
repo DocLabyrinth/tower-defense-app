@@ -3,7 +3,7 @@ import * as ActionTypes from '../constants/ActionTypes';
 import { handleActions } from 'redux-actions';
 
 export default handleActions({
-  [ActionTypes.SPEND_MONEY]: (state, { payload: { amount } }) => {
+  [ActionTypes.MONEY_SPEND]: (state, { payload: { amount } }) => {
     return  {...state, balance: state.balance - amount}
   },
   [ActionTypes.GIVE_MONEY]: (state, { payload: { amount } }) => {
