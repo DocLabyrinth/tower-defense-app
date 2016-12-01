@@ -14,6 +14,7 @@
     "expose-loader": "^0.7.1",
     "lodash": "^4.16.1",
     "pathfinding": "^0.4.18",
+    "phaser": "^2.6.2",
     "react": "^0.14.0",
     "react-dom": "^0.14.0",
     "react-redux": "^4.0.0",
