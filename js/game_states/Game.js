@@ -33,7 +33,7 @@ export default class Game {
 
     this.towerSprites = {}
 
-    this.gridW = 20
+    this.gridW = 16
     this.gridH = 10
     this.tileSide = 64
 
@@ -43,7 +43,7 @@ export default class Game {
     }
 
     this.exitPoint = {
-      x: 19,
+      x: 15,
       y: floor(this.gridH/2)
     }
 
@@ -96,6 +96,16 @@ export default class Game {
       return
     }
 
+    if(gridPos.x == this.spawnPoint.x && gridPos.y == this.spawnPoint.y) {
+      console.log('cant build on the spawn point')
+      return
+    }
+
+    if(gridPos.x == this.exitPoint.x && gridPos.y == this.exitPoint.y) {
+      console.log('cant build on the exit point')
+      return
+    }
+
     if(this.isCalculatingPath) {
       // an existing path calculation is already in progress
       return
@@ -112,12 +122,10 @@ export default class Game {
     let blockTestGrid = this.grid.clone()
     blockTestGrid.setWalkableAt(gridPos.x, gridPos.y, false)
 
-
     findPathAsync(this.exitPoint.x, this.exitPoint.y, blockTestGrid).then((newGrid) => {
       this.isCalculatingPath = false
 
       let startNode = newGrid.getNodeAt(this.spawnPoint.x, this.spawnPoint.y)
-      let targetNode =
 
       if(!startNode.opened) {
         console.log('this tower would block the path, not building it :P')
