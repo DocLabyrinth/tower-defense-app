@@ -1,6 +1,6 @@
 import * as ActionTypes from '../constants/ActionTypes';
 import * as TowerTypes from '../constants/TowerTypes';
-import * as TowerStates from '../constants/TowerStates';
+import * as GameObjectStates from '../constants/GameObjectStates';
 import {TowerError} from '../errors/towers';
 import { handleActions } from 'redux-actions';
 
@@ -9,7 +9,8 @@ export var towerObjKey = (gridX, gridY) => (`${gridX}x${gridY}`);
 var towerObj = (towerOpts) => {
   return {
     type: TowerTypes.DEFAULT_TOWER_TYPE,
-    state: TowerStates.TOWER_NEW,
+    // state: GameObjectStates.TOWER_NEW,
+    state: GameObjectStates.TOWER_READY,
     health: 100,
     built: 100,
     upgraded: 0,

@@ -4,3 +4,6 @@ export const GRID_SQUARE_BLOCK = 'GRID_SQUARE_BLOCK';
 
 export const MONEY_ADD = 'MONEY_ADD'
 export const MONEY_SPEND = 'MONEY_SPEND'
+
+export const CREEP_SPAWN = 'CREEP_SPAWN'
+export const CREEP_STATE_CHANGE = 'CREEP_STATE_CHANGE'

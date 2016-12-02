@@ -2,7 +2,8 @@ import Grid from '../vendor/pathfinding/Grid'
 import findPathAsync from '../utils/breadth-first'
 import * as moneyActions from '../actions/money'
 import * as towerActions from '../actions/towers'
-import * as TowerStates from '../constants/TowerStates'
+import * as creepActions from '../actions/creeps'
+import * as GameObjectStates from '../constants/GameObjectStates'
 import * as TowerTypes from '../constants/TowerTypes'
 import configureStore from '../store/configureStore'
 import {towerObjKey} from '../reducers/towers'
@@ -31,7 +32,10 @@ export default class Game {
 
     this.store = configureStore()
 
-    this.towerSprites = {}
+    this.sprites = {
+      towers: {},
+      creeps: {}
+    }
 
     this.gridW = 16
     this.gridH = 10
@@ -72,14 +76,38 @@ export default class Game {
     this.initPromise.then((initialGrid) => {
       this.initialised = true
       this.input.onDown.add(this.clickHandler, this);
-      this.updateTowerSpritesUnsubscribe = this.store.subscribe(this.updateTowerSprites.bind(this))
     })
+
+    // debug - spawn a creep when a key is pressed
+    this.spawnKeyBind = this.input.keyboard.addKey(Phaser.Keyboard.ONE);
+    this.spawnKeyBind.onDown.add(this.debugSpawnCreep, this);
   }
 
   shutdown() {
-    if(this.updateTowerSpritesUnsubscribe) {
-      this.updateTowerSpritesUnsubscribe()
-    }
+
+  }
+
+  update() {
+    // console.log('update loop :P')
+  }
+
+  debugSpawnCreep() {
+    let newSprite = this.add.sprite(
+      this.spawnPoint.x * this.tileSide,
+      this.spawnPoint.y * this.tileSide,
+      'backgroundTiles'
+    )
+
+    newSprite.frame = 32
+
+    let creepId = this.store.getState().creeps.nextId
+
+    this.sprites.creeps[creepId] = newSprite
+
+    this.store.dispatch(creepActions.creepSpawn(
+      this.spawnPoint,
+      'CREEP_DEFAULT'
+    ))
   }
 
   clickHandler(pointer) {
@@ -132,47 +160,25 @@ export default class Game {
         return
       }
 
-      try {
-        this.store.dispatch(towerActions.towerBuild(
-          gridPos,
-          TowerTypes.DEFAULT_TOWER_TYPE
-        ))
-      }
-      catch(e) {
-        console.log('failed to build tower', e)
-        return
-      }
+      let newSprite = this.add.sprite(
+        gridPos.x * this.tileSide,
+        gridPos.y * this.tileSide,
+        'backgroundTiles'
+      )
 
-      // replace the grid once everything is finished
+      let positionKey = towerObjKey(gridPos.x, gridPos.y)
+
+      newSprite.frame = 22
+      this.sprites.towers[positionKey] = newSprite
+
+      this.store.dispatch(towerActions.towerBuild(
+        gridPos,
+        TowerTypes.DEFAULT_TOWER_TYPE
+      ))
+
+      // update the pathfinding grid once everything is finished
       this.grid = blockTestGrid
     })
-  }
-
-  updateTowerSprites() {
-    const {towers} = this.store.getState()
-
-    // check which towers have been placed but still need to have a sprite added
-    Object.values(towers)
-      .filter((tower) => tower.state == TowerStates.TOWER_NEW)
-      .forEach((tower) => {
-        let newSprite = this.add.sprite(
-          tower.position.x * this.tileSide,
-          tower.position.y * this.tileSide,
-          'backgroundTiles'
-        )
-
-        let positionKey = towerObjKey(tower.position.x, tower.position.y)
-
-        let action = towerActions.towerStateChange(
-          tower.position,
-          TowerStates.TOWER_READY
-        )
-
-        newSprite.frame = 22
-        this.towerSprites[positionKey] = newSprite
-
-        this.store.dispatch(action)
-      })
   }
 
   drawLine(canvas, startX, startY, endX, endY, colour = '#000000', thickness = 1) {
