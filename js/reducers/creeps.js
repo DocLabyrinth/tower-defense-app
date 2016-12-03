@@ -2,13 +2,16 @@ import * as ActionTypes from '../constants/ActionTypes';
 import * as GameObjectStates from '../constants/GameObjectStates';
 import { handleActions } from 'redux-actions';
 
-var creepObj = (id, type) => {
+var creepObj = ({id, type, position}) => {
   return {
     id,
     type,
     health: 100,
     // state: GameObjectStates.CREEP_NEW
-    state: GameObjectStates.CREEP_ALIVE
+    state: GameObjectStates.CREEP_ALIVE,
+    position: {
+      ...position
+    }
   }
 }
 
@@ -21,10 +24,26 @@ export default handleActions({
         nextId: nextCreepId,
         active: {
           ...state.active,
-          [nextCreepId]: creepObj(nextCreepId, 'CREEP_DEFAULT')
+          [nextCreepId]: creepObj(nextCreepId, 'CREEP_DEFAULT', position)
         }
       }
     },
+
+    [ActionTypes.CREEP_MOVE]: (state, { payload: { id, newPosition } }) => {
+      return  {
+        ...state,
+        active: {
+          ...state.active,
+          [id]: {
+            ...state.active[id],
+            position: {
+              ...newPosition
+            }
+          }
+        }
+      }
+    },
+
     [ActionTypes.CREEP_STATE_CHANGE]: (state, { payload: { id, newState } }) => {
       if(!state.active[id]) {
         throw new Error(`Attempted to set state ${newState} on creep with non-existent id ${id}`)

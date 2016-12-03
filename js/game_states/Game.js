@@ -76,6 +76,7 @@ export default class Game {
     this.initPromise.then((initialGrid) => {
       this.initialised = true
       this.input.onDown.add(this.clickHandler, this);
+      this.grid = initialGrid
     })
 
     // debug - spawn a creep when a key is pressed
@@ -88,13 +89,102 @@ export default class Game {
   }
 
   update() {
-    // console.log('update loop :P')
+    this.moveCreeps()
+  }
+
+  moveCreeps() {
+    let dbgBaseSpeed = 1
+
+    Object.entries(this.sprites.creeps).forEach(([creepId, creepSprite]) => {
+      if(!creepSprite.destGridSquare) {
+        this.assignNewCreepMoveTarget(creepSprite)
+      }
+
+      let destNode = this.grid.getNodeAt(
+        creepSprite.destGridSquare.x,
+        creepSprite.destGridSquare.y
+      )
+
+      if(!destNode) {
+        console.log('no dest node', 'creepSprite.destGridSquare', creepSprite.destGridSquare, this.grid, 'the previous node', this.grid.getNodeAt(
+          creepSprite.destGridSquare.x,
+          creepSprite.destGridSquare.y
+        ))
+      }
+
+      if(!destNode.walkable) {
+        this.assignNewCreepMoveTarget(creepSprite)
+        destNode = this.grid.getNodeAt(
+          creepSprite.destGridSquare.x,
+          creepSprite.destGridSquare.y
+        )
+      }
+
+      let destPoint = new Phaser.Point(
+        destNode.x * this.tileSide,
+        destNode.y * this.tileSide
+      )
+
+      if(creepSprite.position.distance(destPoint) < dbgBaseSpeed) {
+        // if the sprite is within one tick of movement from the
+        // destination, move it there and recalculate
+        creepSprite.position = destPoint
+
+        if(
+          destNode.x == this.exitPoint.x &&
+          destNode.y == this.exitPoint.y
+        ) {
+          // the creep reached the endpoint
+          creepSprite.destroy()
+          delete this.sprites.creeps[creepId]
+        }
+        else {
+          this.assignNewCreepMoveTarget(creepSprite)
+        }
+        return
+      }
+
+      let newPoint = destPoint
+        .subtract(creepSprite.position.x, creepSprite.position.y)
+        .normalize()
+        .multiply(dbgBaseSpeed, dbgBaseSpeed)
+
+      creepSprite.position.add(newPoint.x, newPoint.y, creepSprite.position)
+    })
+  }
+
+  assignNewCreepMoveTarget(creep) {
+    let creepGridPos = this.getGridSquare(
+      creep.position.x,
+      creep.position.y
+    )
+
+    let currentNode = this.grid.getNodeAt(
+      creepGridPos.x,
+      creepGridPos.y
+    )
+
+    if(
+      currentNode.x == this.exitPoint.x &&
+      currentNode.y == this.exitPoint.y
+    ) {
+      // next target is the exit point and has no parent
+      creep.destGridSquare = {x: currentNode.x, y: currentNode.y}
+      return
+    }
+
+    creep.destGridSquare = {
+      x: currentNode.parent.x,
+      y: currentNode.parent.y
+    }
   }
 
   debugSpawnCreep() {
     let newSprite = this.add.sprite(
       this.spawnPoint.x * this.tileSide,
       this.spawnPoint.y * this.tileSide,
+      // (this.exitPoint.x-2) * this.tileSide,
+      // this.exitPoint.y * this.tileSide,
       'backgroundTiles'
     )
 
@@ -177,7 +267,7 @@ export default class Game {
       ))
 
       // update the pathfinding grid once everything is finished
-      this.grid = blockTestGrid
+      this.grid = newGrid
     })
   }
 
@@ -191,8 +281,8 @@ export default class Game {
 
   getGridSquare(x, y) {
     return {
-      x: floor(x/this.tileSide),
-      y: floor(y/this.tileSide)
+      x: x == 0 ? 0 : Math.floor(x/this.tileSide),
+      y: y == 0 ? 0 : Math.floor(y/this.tileSide)
     }
   }
 
@@ -241,149 +331,3 @@ export default class Game {
     this.game.add.sprite(0, 0, this.backgroundTexture);
   }
 }
-
-// function createGridSpriteIndex(grid, tileSide, game) {
-//   var gridSpriteIndex = {};
-//
-//   range(grid.width).forEach(function(x) {
-//     range(grid.height).forEach(function(y) {
-//       gridSpriteIndex[`${x}x${y}`] = game.add.sprite(x * tileSide, y * tileSide, 'anchor');
-//     })
-//   })
-//
-//   console.log('created gridSpriteIndex', gridSpriteIndex)
-//   return gridSpriteIndex
-// }
-//
-// function redrawGridSprites(grid, gridSpriteIndex, tileSide) {
-//   range(grid.width).forEach(function(x) {
-//     range(grid.height).forEach(function(y) {
-//       var gridSprite = gridSpriteIndex[`${x}x${y}`];
-//
-//       if(!gridSprite) {
-//         return;
-//       }
-//
-//       if(x == targetX && y == targetY) {
-//         gridSprite.loadTexture('anchor');
-//         return;
-//       }
-//
-//       var node = grid.getNodeAt(x, y);
-//
-//       if(!node.walkable) {
-//         gridSprite.loadTexture('tower');
-//         return;
-//       }
-//
-//       if(node.parent.x < node.x) {
-//         gridSprite.loadTexture('left');
-//       }
-//       else if (node.parent.x > node.x) {
-//         gridSprite.loadTexture('right');
-//       }
-//       else if(node.parent.y < node.y) {
-//         gridSprite.loadTexture('up');
-//       }
-//       else if (node.parent.y > node.y) {
-//         gridSprite.loadTexture('down');
-//       }
-//     })
-//   })
-// }
-//
-// var hackyGlobalGrid;
-// findPathAsync(targetX, targetY, blankGrid)
-//   .then(function(initialGrid) {
-//
-//     hackyGlobalGrid = initialGrid
-//
-//     var game = new Phaser.Game(
-//       gridW * tileSide,
-//       gridH * tileSide,
-//       Phaser.AUTO,
-//       'main',
-//       { render: render, preload: preload, create: create }
-//     );
-//
-//     var gridSpriteIndex,
-//       calculating = false;
-//       // console.log(game.input.mousePointer.x, game.input.mousePointer.y)
-//
-//     function create() {
-//         //  This creates a simple sprite that is using our loaded image and
-//         //  displays it on-screen
-//         gridSpriteIndex = createGridSpriteIndex(initialGrid, tileSide, game)
-//         redrawGridSprites(hackyGlobalGrid, gridSpriteIndex, tileSide)
-//
-//         game.input.mouse.mouseUpCallback = function() {
-//           if(calculating) {
-//             console.log('not yet :P')
-//             return;
-//           }
-//
-//           var inSquare = {
-//             x: floor(game.input.mousePointer.x / tileSide),
-//             y: floor(game.input.mousePointer.y / tileSide)
-//           }
-//
-//           var clickedNode = hackyGlobalGrid.getNodeAt(
-//             inSquare.x,
-//             inSquare.y
-//           );
-//
-//           if(!clickedNode) {
-//             console.log('couldn\'t find the node',
-//               inSquare.x,
-//               inSquare.y
-//             )
-//             return
-//           }
-//
-//           if(!clickedNode.walkable) {
-//             console.log('already a tower here :P')
-//             return;
-//           }
-//
-//           clickedNode.walkable = false
-//
-//           calculating = true;
-//           findPathAsync(targetX, targetY, hackyGlobalGrid)
-//             .then(function(reworkedGrid) {
-//               calculating = false
-//               hackyGlobalGrid = reworkedGrid
-//               console.log('the new grid', hackyGlobalGrid)
-//               redrawGridSprites(hackyGlobalGrid, gridSpriteIndex, tileSide)
-//             })
-//             .catch(function(err) {
-//               throw err
-//             })
-//         }
-//
-//     }
-//
-//     function render() {
-//       // console.log()
-//     }
-//
-//     function preload() {
-//
-//         //  You can fill the preloader with as many assets as your game requires
-//
-//         //  Here we are loading an image. The first parameter is the unique
-//         //  string by which we'll identify the image later in our code.
-//
-//         //  The second parameter is the URL of the image (relative)
-//         game.load.image('up', 'images/arrow_up.png');
-//         game.load.image('down', 'images/arrow_down.png');
-//         game.load.image('left', 'images/arrow_left.png');
-//         game.load.image('right', 'images/arrow_right.png');
-//         game.load.image('anchor', 'images/anchor.png');
-//         game.load.image('unreachable', 'images/cross.png');
-//         game.load.image('tower', 'images/emoticon_evilgrin.png');
-//     }
-//
-//   })
-//   .catch(function(err) {
-//     throw err
-//   })
