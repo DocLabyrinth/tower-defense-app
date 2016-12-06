@@ -90,6 +90,7 @@ export default class Game {
 
   update() {
     this.moveCreeps()
+    this.fireBullets()
   }
 
   moveCreeps() {
@@ -104,13 +105,6 @@ export default class Game {
         creepSprite.destGridSquare.x,
         creepSprite.destGridSquare.y
       )
-
-      if(!destNode) {
-        console.log('no dest node', 'creepSprite.destGridSquare', creepSprite.destGridSquare, this.grid, 'the previous node', this.grid.getNodeAt(
-          creepSprite.destGridSquare.x,
-          creepSprite.destGridSquare.y
-        ))
-      }
 
       if(!destNode.walkable) {
         this.assignNewCreepMoveTarget(creepSprite)
@@ -150,6 +144,19 @@ export default class Game {
         .multiply(dbgBaseSpeed, dbgBaseSpeed)
 
       creepSprite.position.add(newPoint.x, newPoint.y, creepSprite.position)
+    })
+  }
+
+  fireBullets() {
+    let creepSprites = Object.values(this.sprites.creeps)
+
+    if(creepSprites.length < 1) {
+      return;
+    }
+
+    Object.values(this.sprites.towers).forEach((tower) => {
+      let target = creepSprites[creepSprites.length-1]
+      tower.weapon.fireAtSprite(target)
     })
   }
 
@@ -250,25 +257,47 @@ export default class Game {
         return
       }
 
-      let newSprite = this.add.sprite(
-        gridPos.x * this.tileSide,
-        gridPos.y * this.tileSide,
-        'backgroundTiles'
-      )
-
-      let positionKey = towerObjKey(gridPos.x, gridPos.y)
-
-      newSprite.frame = 22
-      this.sprites.towers[positionKey] = newSprite
-
-      this.store.dispatch(towerActions.towerBuild(
-        gridPos,
-        TowerTypes.DEFAULT_TOWER_TYPE
-      ))
+      this.buildTower(gridPos)
 
       // update the pathfinding grid once everything is finished
       this.grid = newGrid
     })
+  }
+
+  buildTower(gridPos) {
+    let newSprite = this.add.sprite(
+      gridPos.x * this.tileSide,
+      gridPos.y * this.tileSide,
+      'backgroundTiles'
+    )
+
+    let positionKey = towerObjKey(gridPos.x, gridPos.y)
+
+    newSprite.frame = 22
+    this.sprites.towers[positionKey] = newSprite
+
+    let weapon = this.add.weapon(-1, 'backgroundTiles', 44)
+
+    weapon.bulletKillType = Phaser.Weapon.KILL_DISTANCE
+    // weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS
+		// weapon.bulletAngleOffset = 90
+		weapon.bulletSpeed = 500
+		weapon.trackRotation = false;
+		weapon.fireRate = 1000;
+		weapon.bulletRotateToVelocity = false;
+    weapon.bulletKillDistance = 150
+    weapon.trackSprite(
+      newSprite,
+      Math.floor(newSprite.width/2),
+      Math.floor(newSprite.height/2)
+    )
+
+    newSprite.weapon = weapon
+
+    this.store.dispatch(towerActions.towerBuild(
+      gridPos,
+      TowerTypes.DEFAULT_TOWER_TYPE
+    ))
   }
 
   drawLine(canvas, startX, startY, endX, endY, colour = '#000000', thickness = 1) {

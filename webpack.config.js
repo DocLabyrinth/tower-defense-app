@@ -9,6 +9,7 @@ var devFlagPlugin = new webpack.DefinePlugin({
 // Phaser webpack config
 var phaserModule = path.join(__dirname, '/node_modules/phaser/');
 var phaser = path.join(phaserModule, 'build/custom/phaser-arcade-physics.js');
+var phaserPlugins = path.join(phaserModule, 'dist/modules');
 var pixi = path.join(phaserModule, 'build/custom/pixi.js');
 
 module.exports = {
@@ -42,8 +43,9 @@ module.exports = {
   resolve: {
     extensions: ['', '.js', '.json'],
     alias: {
-      'phaser': phaser,
-      'pixi': pixi
+      phaser: phaser,
+      phaserPlugins: phaserPlugins,
+      pixi: pixi
     }
   }
 };

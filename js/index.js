@@ -6,6 +6,7 @@
 
 import 'pixi';
 import 'phaser';
+import 'phaserPlugins/weapon'
 
 import Game from './game_states/Game'
 
@@ -16,6 +17,5 @@ var game = new Phaser.Game(
   'main'
 );
 
-console.log('game state', Game)
 game.state.add('Game', Game)
 game.state.start('Game')
