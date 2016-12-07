@@ -32,10 +32,6 @@ export default class Game {
 
     this.store = configureStore()
 
-    this.sprites = {
-      towers: {},
-      creeps: {}
-    }
 
     this.gridW = 16
     this.gridH = 10
@@ -70,6 +66,17 @@ export default class Game {
 
   create() {
     this.createInitialBackground()
+
+    this.towers = this.add.group(this.game.world, 'towers')
+    // this.towers = this.add.group()
+    this.creeps = this.add.group(
+      this.game.world,
+      'creeps',
+      false,
+      true,
+      Phaser.Physics.ARCADE
+    )
+
     this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 
     this.initPromise = findPathAsync(this.exitPoint.x, this.exitPoint.y, this.grid)
@@ -81,7 +88,7 @@ export default class Game {
 
     // debug - spawn a creep when a key is pressed
     this.spawnKeyBind = this.input.keyboard.addKey(Phaser.Keyboard.ONE);
-    this.spawnKeyBind.onDown.add(this.debugSpawnCreep, this);
+    this.spawnKeyBind.onDown.add(this.spawnCreep, this);
   }
 
   shutdown() {
@@ -89,14 +96,26 @@ export default class Game {
   }
 
   update() {
+    this.collideBullets()
     this.moveCreeps()
     this.fireBullets()
+  }
+
+  collideBullets() {
+    this.towers.forEach((tower) => {
+      this.physics.arcade.collide(this.creeps, tower.weapon.bullets, null, this.handleBulletCollision, this);
+    })
+  }
+
+  handleBulletCollision(creep, bullet) {
+    creep.damage(20)
+    bullet.destroy()
   }
 
   moveCreeps() {
     let dbgBaseSpeed = 1
 
-    Object.entries(this.sprites.creeps).forEach(([creepId, creepSprite]) => {
+    this.creeps.forEachAlive((creepSprite) => {
       if(!creepSprite.destGridSquare) {
         this.assignNewCreepMoveTarget(creepSprite)
       }
@@ -129,8 +148,7 @@ export default class Game {
           destNode.y == this.exitPoint.y
         ) {
           // the creep reached the endpoint
-          creepSprite.destroy()
-          delete this.sprites.creeps[creepId]
+          creepSprite.kill()
         }
         else {
           this.assignNewCreepMoveTarget(creepSprite)
@@ -148,14 +166,21 @@ export default class Game {
   }
 
   fireBullets() {
-    let creepSprites = Object.values(this.sprites.creeps)
-
-    if(creepSprites.length < 1) {
+    if(this.creeps.countLiving < 1) {
       return;
     }
 
-    Object.values(this.sprites.towers).forEach((tower) => {
-      let target = creepSprites[creepSprites.length-1]
+    this.towers.forEach((tower) => {
+      let target = this.creeps.getClosestTo(tower)
+
+      if(!target) {
+        return
+      }
+
+      if(tower.position.distance(target) > tower.weapon.bulletKillDistance) {
+        return
+      }
+
       tower.weapon.fireAtSprite(target)
     })
   }
@@ -186,35 +211,27 @@ export default class Game {
     }
   }
 
-  debugSpawnCreep() {
-    let newSprite = this.add.sprite(
+  spawnCreep() {
+    let creep = this.creeps.create(
       this.spawnPoint.x * this.tileSide,
       this.spawnPoint.y * this.tileSide,
       // (this.exitPoint.x-2) * this.tileSide,
       // this.exitPoint.y * this.tileSide,
-      'backgroundTiles'
+      'backgroundTiles',
+      32
     )
+    creep.health = 100
+    creep.body.setSize(16,28,24,20)
 
-    newSprite.frame = 32
-
-    let creepId = this.store.getState().creeps.nextId
-
-    this.sprites.creeps[creepId] = newSprite
-
-    this.store.dispatch(creepActions.creepSpawn(
-      this.spawnPoint,
-      'CREEP_DEFAULT'
-    ))
+    // if this isn't set the creep goes flying away when a bullet hits it :(
+    creep.body.immovable = true
   }
 
   clickHandler(pointer) {
     const {positionDown: {x: clickX, y: clickY}} = pointer
     const gridPos = this.getGridSquare(clickX, clickY)
-    const {
-      towers: {
-        [towerObjKey(gridPos.x, gridPos.y)]: currentTower
-      }
-    } = this.store.getState()
+
+    let gridSquare = this.grid.getNodeAt(gridPos.x, gridPos.y)
 
     if(gridPos.x >= this.gridW || gridPos.y >= this.gridH) {
       // click was outside the game area
@@ -236,12 +253,13 @@ export default class Game {
       return
     }
 
-    if(currentTower) {
+    if(!gridSquare.walkable) {
+      console.log('there is already a tower here')
       // TODO: select the tower when it's clicked
       return
     }
 
-     this.isCalculatingPath = true
+    this.isCalculatingPath = true
 
     // check if building a tower here would block the path to the exit
     let blockTestGrid = this.grid.clone()
@@ -265,39 +283,31 @@ export default class Game {
   }
 
   buildTower(gridPos) {
-    let newSprite = this.add.sprite(
+    let newSprite = this.towers.create(
       gridPos.x * this.tileSide,
       gridPos.y * this.tileSide,
-      'backgroundTiles'
+      'backgroundTiles',
+      22
     )
-
-    let positionKey = towerObjKey(gridPos.x, gridPos.y)
-
-    newSprite.frame = 22
-    this.sprites.towers[positionKey] = newSprite
 
     let weapon = this.add.weapon(-1, 'backgroundTiles', 44)
 
     weapon.bulletKillType = Phaser.Weapon.KILL_DISTANCE
-    // weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS
-		// weapon.bulletAngleOffset = 90
-		weapon.bulletSpeed = 500
+		weapon.bulletSpeed = 800
 		weapon.trackRotation = false;
 		weapon.fireRate = 1000;
 		weapon.bulletRotateToVelocity = false;
     weapon.bulletKillDistance = 150
+
     weapon.trackSprite(
       newSprite,
       Math.floor(newSprite.width/2),
       Math.floor(newSprite.height/2)
     )
 
-    newSprite.weapon = weapon
+    weapon.setBulletBodyOffset(16, 16, 24,24)
 
-    this.store.dispatch(towerActions.towerBuild(
-      gridPos,
-      TowerTypes.DEFAULT_TOWER_TYPE
-    ))
+    newSprite.weapon = weapon
   }
 
   drawLine(canvas, startX, startY, endX, endY, colour = '#000000', thickness = 1) {
