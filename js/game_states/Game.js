@@ -68,7 +68,7 @@ export default class Game {
     this.createInitialBackground()
 
     this.towers = this.add.group(this.game.world, 'towers')
-    // this.towers = this.add.group()
+
     this.creeps = this.add.group(
       this.game.world,
       'creeps',
@@ -103,12 +103,18 @@ export default class Game {
 
   collideBullets() {
     this.towers.forEach((tower) => {
-      this.physics.arcade.collide(this.creeps, tower.weapon.bullets, null, this.handleBulletCollision, this);
+      this.physics.arcade.collide(
+        this.creeps,
+        tower.weapon.bullets,
+        null,
+        this.handleBulletCollision,
+        this
+      );
     })
   }
 
   handleBulletCollision(creep, bullet) {
-    creep.damage(20)
+    creep.damage(bullet._custom_BulletDoesDamage)
     bullet.destroy()
   }
 
@@ -181,7 +187,7 @@ export default class Game {
         return
       }
 
-      tower.weapon.fireAtSprite(target)
+      tower.weapon.fireAtXY(target.centerX, target.centerY)
     })
   }
 
@@ -298,6 +304,7 @@ export default class Game {
 		weapon.fireRate = 1000;
 		weapon.bulletRotateToVelocity = false;
     weapon.bulletKillDistance = 150
+    weapon.onFire.add((bullet, weapon) => bullet._custom_BulletDoesDamage = 10)
 
     weapon.trackSprite(
       newSprite,
