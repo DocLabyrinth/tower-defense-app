@@ -89,10 +89,12 @@ export default class Game {
     // debug - spawn a creep when a key is pressed
     this.spawnKeyBind = this.input.keyboard.addKey(Phaser.Keyboard.ONE);
     this.spawnKeyBind.onDown.add(this.spawnCreep, this);
+
+    setTimeout(() => this.spawnCreepTicker(), 5000)
   }
 
   shutdown() {
-
+    this.shutdown = true
   }
 
   update() {
@@ -215,6 +217,20 @@ export default class Game {
       x: currentNode.parent.x,
       y: currentNode.parent.y
     }
+  }
+
+  spawnCreepTicker() {
+    this.spawnCreep()
+
+    if(this.shutdown == true) {
+      // TODO: also stop when lives run out and the game is over
+      return;
+    }
+
+    let nextSpawnDelay = Math.ceil(Math.random() * (3 - 1) + 1) * 1000
+
+
+    setTimeout(() => this.spawnCreepTicker(), nextSpawnDelay)
   }
 
   spawnCreep() {
