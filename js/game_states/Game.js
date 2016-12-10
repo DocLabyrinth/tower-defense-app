@@ -34,7 +34,7 @@ export default class Game {
 
 
     this.gridW = 16
-    this.gridH = 10
+    this.gridH = 11
     this.tileSide = 64
 
     this.spawnPoint = {
@@ -51,6 +51,12 @@ export default class Game {
 
     this.initialised = false;
     this.isCalculatingPath = false;
+
+    this.coins = 500
+    this.lives = 20
+
+    this.towerCost = 50
+    this.creepKillReward = 30
   }
 
   preload() {
@@ -66,6 +72,7 @@ export default class Game {
 
   create() {
     this.createInitialBackground()
+    this.createGameLabels()
 
     this.towers = this.add.group(this.game.world, 'towers')
 
@@ -101,6 +108,25 @@ export default class Game {
     this.collideBullets()
     this.moveCreeps()
     this.fireBullets()
+  }
+
+  createGameLabels() {
+    this.coinsLabel = this.add.text(25, this.world.height - 64, `Coins: ${this.coins}`);
+    this.coinsLabel.align = 'left';
+    this.coinsLabel.font = 'Arial Black';
+    this.coinsLabel.fontSize = 30;
+    this.coinsLabel.fontWeight = 'bold';
+    this.coinsLabel.fill = '#43d637';
+  }
+
+  alterCoins(amount) {
+    if(this.coins + amount < 0) {
+      throw new Error(`not enough money to spend ${-amount}`)
+    }
+
+    this.coins += amount
+
+    this.coinsLabel.text = `Coins: ${this.coins}`
   }
 
   collideBullets() {
@@ -244,6 +270,11 @@ export default class Game {
     )
     creep.health = 100
     creep.body.setSize(16,28,24,20)
+    creep.events.onKilled.add(() => {
+      if(creep.health <= 0) {
+        this.alterCoins(this.creepKillReward)
+      }
+    })
 
     // if this isn't set the creep goes flying away when a bullet hits it :(
     creep.body.immovable = true
@@ -295,6 +326,13 @@ export default class Game {
       if(!startNode.opened) {
         console.log('this tower would block the path, not building it :P')
         return
+      }
+
+      try {
+        this.alterCoins(-this.towerCost)
+      }
+      catch(err) {
+        return;
       }
 
       this.buildTower(gridPos)
