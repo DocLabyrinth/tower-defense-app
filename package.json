@@ -4,7 +4,9 @@
   "scripts": {
     "start": "DEBUG=true node server.js",
     "build": "webpack -p --config webpack.production.js",
-    "build-dev": "webpack -p"
+    "build-dev": "webpack -p",
+    "cordova-emulate": "bash scripts/cordova-prepare.sh; cd TowerDefenseGame; cordova emulate android",
+    "cordova-device": "bash scripts/cordova-prepare.sh; cd TowerDefenseGame; cordova run android --device"
   },
   "dependencies": {
     "async": "^2.0.1",

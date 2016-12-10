@@ -1,5 +1,13 @@
-.text {
-  font-size: 2rem;
-  line-height: 1.5;
-  color: #FF0000;
+body {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+#main {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
 }

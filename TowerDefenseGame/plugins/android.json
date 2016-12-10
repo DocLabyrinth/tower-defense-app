@@ -17,6 +17,9 @@
             "XWALK_MODE": "embedded",
             "XWALK_MULTIPLEAPK": "true",
             "PACKAGE_NAME": "com.testing.towerdefense"
+        },
+        "cordova-plugin-screen-orientation": {
+            "PACKAGE_NAME": "com.testing.towerdefense"
         }
     },
     "dependent_plugins": {}

@@ -4,9 +4,18 @@
 //
 // ReactDOM.render(<App />, document.getElementById('main'));
 
+import styles from '../css/app.css';
 import 'pixi';
 import 'phaser';
 import 'phaserPlugins/weapon'
+
+if(screen) {
+  document.addEventListener("ondeviceready", () => {
+    console.log(screen, window.screen)
+    // force the screen to landscape orientation if we're running in CORDOVA_BASE
+    screen.lockOrientation('landscape');
+  })
+}
 
 import Game from './game_states/Game'
 
