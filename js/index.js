@@ -17,14 +17,16 @@ if(screen) {
   })
 }
 
-import Game from './game_states/Game'
-
 var game = new Phaser.Game(
   1024,
-  768,
+  640,
   Phaser.AUTO,
-  'main'
+  ''
 );
 
+import Boot from './game_states/Boot'
+import Game from './game_states/Game'
+
+game.state.add('Boot', Boot)
 game.state.add('Game', Game)
-game.state.start('Game')
+game.state.start('Boot')

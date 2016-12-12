@@ -84,8 +84,6 @@ export default class Game {
       Phaser.Physics.ARCADE
     )
 
-    this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-
     this.initPromise = findPathAsync(this.exitPoint.x, this.exitPoint.y, this.grid)
     this.initPromise.then((initialGrid) => {
       this.initialised = true
