@@ -7,6 +7,7 @@ import * as GameObjectStates from '../constants/GameObjectStates'
 import * as TowerTypes from '../constants/TowerTypes'
 import configureStore from '../store/configureStore'
 import {towerObjKey} from '../reducers/towers'
+import TowerManager from '../game/TowerManager'
 import range from 'lodash/range'
 import floor from 'lodash/floor'
 
@@ -34,7 +35,7 @@ export default class Game {
 
 
     this.gridW = 16
-    this.gridH = 11
+    this.gridH = 9
     this.tileSide = 64
 
     this.spawnPoint = {
@@ -74,7 +75,8 @@ export default class Game {
     this.createInitialBackground()
     this.createGameLabels()
 
-    this.towers = this.add.group(this.game.world, 'towers')
+    // this.towers = this.add.group(this.game.world, 'towers')
+    this.towerManager = new TowerManager({state: this})
 
     this.creeps = this.add.group(
       this.game.world,
@@ -103,9 +105,9 @@ export default class Game {
   }
 
   update() {
-    this.collideBullets()
     this.moveCreeps()
-    this.fireBullets()
+    this.towerManager.fireBullets(this.creeps)
+    this.towerManager.collideBullets(this.creeps)
   }
 
   createGameLabels() {
@@ -125,23 +127,6 @@ export default class Game {
     this.coins += amount
 
     this.coinsLabel.text = `Coins: ${this.coins}`
-  }
-
-  collideBullets() {
-    this.towers.forEach((tower) => {
-      this.physics.arcade.collide(
-        this.creeps,
-        tower.weapon.bullets,
-        null,
-        this.handleBulletCollision,
-        this
-      );
-    })
-  }
-
-  handleBulletCollision(creep, bullet) {
-    creep.damage(bullet._custom_BulletDoesDamage)
-    bullet.destroy()
   }
 
   moveCreeps() {
@@ -194,26 +179,6 @@ export default class Game {
         .multiply(dbgBaseSpeed, dbgBaseSpeed)
 
       creepSprite.position.add(newPoint.x, newPoint.y, creepSprite.position)
-    })
-  }
-
-  fireBullets() {
-    if(this.creeps.countLiving < 1) {
-      return;
-    }
-
-    this.towers.forEach((tower) => {
-      let target = this.creeps.getClosestTo(tower)
-
-      if(!target) {
-        return
-      }
-
-      if(tower.position.distance(target) > tower.weapon.bulletKillDistance) {
-        return
-      }
-
-      tower.weapon.fireAtXY(target.centerX, target.centerY)
     })
   }
 
@@ -326,47 +291,20 @@ export default class Game {
         return
       }
 
+      let towerType = 'bullet'
+
       try {
-        this.alterCoins(-this.towerCost)
+        this.alterCoins(-this.towerManager.getBuildCost(towerType))
       }
       catch(err) {
         return;
       }
 
-      this.buildTower(gridPos)
+      this.towerManager.buildTowerAt(gridPos.x, gridPos.y, towerType)
 
       // update the pathfinding grid once everything is finished
       this.grid = newGrid
     })
-  }
-
-  buildTower(gridPos) {
-    let newSprite = this.towers.create(
-      gridPos.x * this.tileSide,
-      gridPos.y * this.tileSide,
-      'backgroundTiles',
-      22
-    )
-
-    let weapon = this.add.weapon(-1, 'backgroundTiles', 44)
-
-    weapon.bulletKillType = Phaser.Weapon.KILL_DISTANCE
-		weapon.bulletSpeed = 800
-		weapon.trackRotation = false;
-		weapon.fireRate = 1000;
-		weapon.bulletRotateToVelocity = false;
-    weapon.bulletKillDistance = 150
-    weapon.onFire.add((bullet, weapon) => bullet._custom_BulletDoesDamage = 10)
-
-    weapon.trackSprite(
-      newSprite,
-      Math.floor(newSprite.width/2),
-      Math.floor(newSprite.height/2)
-    )
-
-    weapon.setBulletBodyOffset(16, 16, 24,24)
-
-    newSprite.weapon = weapon
   }
 
   drawLine(canvas, startX, startY, endX, endY, colour = '#000000', thickness = 1) {
