@@ -55,7 +55,7 @@ export default class Game {
     this.isCalculatingPath = false;
 
     this.coins = 500
-    this.lives = 20
+    this.lives = 2
 
     this.towerCost = 50
     this.creepKillReward = 30
@@ -106,6 +106,13 @@ export default class Game {
     this.coinsLabel.fontSize = 30;
     this.coinsLabel.fontWeight = 'bold';
     this.coinsLabel.fill = '#43d637';
+
+    this.livesLabel = this.add.text(this.world.width - 150, this.world.height - 64, `Lives: ${this.lives}`);
+    this.livesLabel.align = 'right';
+    this.livesLabel.font = 'Arial Black';
+    this.livesLabel.fontSize = 30;
+    this.livesLabel.fontWeight = 'bold';
+    this.livesLabel.fill = '#43d637';
   }
 
   alterCoins(amount) {
@@ -116,6 +123,15 @@ export default class Game {
     this.coins += amount
 
     this.coinsLabel.text = `Coins: ${this.coins}`
+  }
+
+  alterLives(amount) {
+    this.lives += amount
+    this.livesLabel.text = `Lives: ${this.lives}`
+
+    if(this.lives < 1) {
+      throw new Error('out of lives, game over :P')
+    }
   }
 
   clickHandler(pointer) {

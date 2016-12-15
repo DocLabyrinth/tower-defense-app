@@ -42,7 +42,6 @@ export default class Creep {
       return
     }
 
-
     this.moveTarget = {
       x: currentNode.parent.x,
       y: currentNode.parent.y
@@ -63,6 +62,7 @@ export default class Creep {
       ) {
         // the creep reached the endpoint
         this.sprite.kill()
+        this.gameState.alterLives(-1)
       }
       else {
         this.assignMoveTarget()
