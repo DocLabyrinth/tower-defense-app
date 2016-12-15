@@ -8,6 +8,7 @@ import * as TowerTypes from '../constants/TowerTypes'
 import configureStore from '../store/configureStore'
 import {towerObjKey} from '../reducers/towers'
 import TowerManager from '../game/TowerManager'
+import CreepManager from '../game/CreepManager'
 import range from 'lodash/range'
 import floor from 'lodash/floor'
 
@@ -76,15 +77,8 @@ export default class Game {
     this.createGameLabels()
 
     // this.towers = this.add.group(this.game.world, 'towers')
-    this.towerManager = new TowerManager({state: this})
-
-    this.creeps = this.add.group(
-      this.game.world,
-      'creeps',
-      false,
-      true,
-      Phaser.Physics.ARCADE
-    )
+    this.towerManager = new TowerManager({gameState: this})
+    this.creepManager = new CreepManager({gameState: this})
 
     this.initPromise = findPathAsync(this.exitPoint.x, this.exitPoint.y, this.grid)
     this.initPromise.then((initialGrid) => {
@@ -92,12 +86,6 @@ export default class Game {
       this.input.onDown.add(this.clickHandler, this);
       this.grid = initialGrid
     })
-
-    // debug - spawn a creep when a key is pressed
-    this.spawnKeyBind = this.input.keyboard.addKey(Phaser.Keyboard.ONE);
-    this.spawnKeyBind.onDown.add(this.spawnCreep, this);
-
-    setTimeout(() => this.spawnCreepTicker(), 5000)
   }
 
   shutdown() {
@@ -105,9 +93,10 @@ export default class Game {
   }
 
   update() {
-    this.moveCreeps()
-    this.towerManager.fireBullets(this.creeps)
-    this.towerManager.collideBullets(this.creeps)
+    // this.moveCreeps()
+    this.creepManager.moveCreeps()
+    this.towerManager.fireBullets(this.creepManager.spriteGroup)
+    this.towerManager.collideBullets(this.creepManager.spriteGroup)
   }
 
   createGameLabels() {
@@ -127,120 +116,6 @@ export default class Game {
     this.coins += amount
 
     this.coinsLabel.text = `Coins: ${this.coins}`
-  }
-
-  moveCreeps() {
-    let dbgBaseSpeed = 1
-
-    this.creeps.forEachAlive((creepSprite) => {
-      if(!creepSprite.destGridSquare) {
-        this.assignNewCreepMoveTarget(creepSprite)
-      }
-
-      let destNode = this.grid.getNodeAt(
-        creepSprite.destGridSquare.x,
-        creepSprite.destGridSquare.y
-      )
-
-      if(!destNode.walkable) {
-        this.assignNewCreepMoveTarget(creepSprite)
-        destNode = this.grid.getNodeAt(
-          creepSprite.destGridSquare.x,
-          creepSprite.destGridSquare.y
-        )
-      }
-
-      let destPoint = new Phaser.Point(
-        destNode.x * this.tileSide,
-        destNode.y * this.tileSide
-      )
-
-      if(creepSprite.position.distance(destPoint) < dbgBaseSpeed) {
-        // if the sprite is within one tick of movement from the
-        // destination, move it there and recalculate
-        creepSprite.position = destPoint
-
-        if(
-          destNode.x == this.exitPoint.x &&
-          destNode.y == this.exitPoint.y
-        ) {
-          // the creep reached the endpoint
-          creepSprite.kill()
-        }
-        else {
-          this.assignNewCreepMoveTarget(creepSprite)
-        }
-        return
-      }
-
-      let newPoint = destPoint
-        .subtract(creepSprite.position.x, creepSprite.position.y)
-        .normalize()
-        .multiply(dbgBaseSpeed, dbgBaseSpeed)
-
-      creepSprite.position.add(newPoint.x, newPoint.y, creepSprite.position)
-    })
-  }
-
-  assignNewCreepMoveTarget(creep) {
-    let creepGridPos = this.getGridSquare(
-      creep.position.x,
-      creep.position.y
-    )
-
-    let currentNode = this.grid.getNodeAt(
-      creepGridPos.x,
-      creepGridPos.y
-    )
-
-    if(
-      currentNode.x == this.exitPoint.x &&
-      currentNode.y == this.exitPoint.y
-    ) {
-      // next target is the exit point and has no parent
-      creep.destGridSquare = {x: currentNode.x, y: currentNode.y}
-      return
-    }
-
-    creep.destGridSquare = {
-      x: currentNode.parent.x,
-      y: currentNode.parent.y
-    }
-  }
-
-  spawnCreepTicker() {
-    this.spawnCreep()
-
-    if(this.shutdown == true) {
-      // TODO: also stop when lives run out and the game is over
-      return;
-    }
-
-    let nextSpawnDelay = Math.ceil(Math.random() * (3 - 1) + 1) * 1000
-
-
-    setTimeout(() => this.spawnCreepTicker(), nextSpawnDelay)
-  }
-
-  spawnCreep() {
-    let creep = this.creeps.create(
-      this.spawnPoint.x * this.tileSide,
-      this.spawnPoint.y * this.tileSide,
-      // (this.exitPoint.x-2) * this.tileSide,
-      // this.exitPoint.y * this.tileSide,
-      'backgroundTiles',
-      32
-    )
-    creep.health = 100
-    creep.body.setSize(16,28,24,20)
-    creep.events.onKilled.add(() => {
-      if(creep.health <= 0) {
-        this.alterCoins(this.creepKillReward)
-      }
-    })
-
-    // if this isn't set the creep goes flying away when a bullet hits it :(
-    creep.body.immovable = true
   }
 
   clickHandler(pointer) {

@@ -3,9 +3,9 @@ import Tower from './Tower'
 
 export default class TowerManager {
   constructor(opts) {
-    var {state} = opts
+    var {gameState} = opts
 
-    this.gameState = state
+    this.gameState = gameState
     this.towers = {}
     this.spriteGroup = this.gameState.add.group(this.gameState.game.world, 'towers')
   }
@@ -63,8 +63,6 @@ export default class TowerManager {
       type: towerType,
       sprite
     })
-
-    console.log('towers now', this.towers, objectKey)
   }
 
   fireBullets(creepSpriteGroup) {
