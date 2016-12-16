@@ -1,5 +1,10 @@
 import creepSettings from '../constants/CreepTypes'
+import waves from '../constants/Waves'
 import Creep from './Creep'
+
+import sample from 'lodash/sample'
+import cloneDeep from 'lodash/cloneDeep'
+import times from 'lodash/times'
 
 export default class CreepManager {
   constructor({gameState}) {
@@ -13,22 +18,73 @@ export default class CreepManager {
       Phaser.Physics.ARCADE
     )
 
+    this.waveCounter = -1
+    this.waveDuration = Phaser.Timer.SECOND * 40
+    this.waveTimeGap = Phaser.Timer.SECOND * 1
+    this.currentWave = null
+    this.creepSpawnQueue = []
+
     this.creeps = []
 
-    this.spawnCreepTicker()
+    this.gameState.time.events.add(this.waveTimeGap, () => {
+      this.startNextWave()
+    }, this);
+  }
+
+  startNextWave() {
+    this.waveCounter += 1
+
+    if(!waves[this.waveCounter]) {
+      console.log(`no more waves are defined, counter is: ${this.waveCounter}`)
+      return
+    }
+
+    this.currentWave = waves[this.waveCounter]
+
+    console.log(`Starting wave ${this.waveCounter + 1}: ${this.currentWave.name}`, this.currentWave)
+    this.gameState.waveLabel.text = `Wave ${this.waveCounter + 1}: ${this.currentWave.name}`
+
+    // convert the wave definition into objects in the creep spawn queue
+    let totalWaveCreeps = 0
+
+    this.currentWave.creeps.forEach((creepObj) => {
+      totalWaveCreeps += creepObj.count
+
+      times(creepObj.count, (_) => {
+        this.creepSpawnQueue.push({type: creepObj.type})
+      })
+    })
+
+    // distribute the creep spawn times evenly over the wave duration
+    this.gameState.time.events.repeat(
+      this.waveDuration / totalWaveCreeps,
+      totalWaveCreeps,
+      this.spawnCreepTicker,
+      this
+    );
   }
 
   spawnCreepTicker() {
-    this.spawnCreep('soldier')
-
     if(this.gameState.shutdown == true) {
       // TODO: also stop when lives run out and the game is over
       return;
     }
 
-    let nextSpawnDelay = Math.ceil(Math.random() * (3 - 1) + 1) * 1000
+    let nextCreep = this.creepSpawnQueue.pop()
 
-    setTimeout(() => this.spawnCreepTicker(), nextSpawnDelay)
+    if(!nextCreep) {
+      return
+    }
+
+    this.spawnCreep(nextCreep.type)
+
+    if(this.creepSpawnQueue.length < 1) {
+      // wave is finished, start the next one after the configured delay
+      console.log('out of creeps, next wave after', this.waveTimeGap)
+      this.gameState.time.events.add(this.waveTimeGap, () => {
+        this.startNextWave()
+      }, this);
+    }
   }
 
   spawnCreep(type) {

@@ -34,7 +34,6 @@ export default class Game {
 
     this.store = configureStore()
 
-
     this.gridW = 16
     this.gridH = 9
     this.tileSide = 64
@@ -113,6 +112,13 @@ export default class Game {
     this.livesLabel.fontSize = 30;
     this.livesLabel.fontWeight = 'bold';
     this.livesLabel.fill = '#43d637';
+
+    this.waveLabel = this.add.text(250, this.world.height - 64, '');
+    this.waveLabel.align = 'right';
+    this.waveLabel.font = 'Arial Black';
+    this.waveLabel.fontSize = 30;
+    this.waveLabel.fontWeight = 'bold';
+    this.waveLabel.fill = '#43d637';
   }
 
   alterCoins(amount) {
