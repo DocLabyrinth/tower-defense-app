@@ -1,5 +1,7 @@
 # Untitled Tower Defense Game
 
+![Screenshot of the game running](screenshot.png)
+
 A prototype of a 2d tower defense game I threw together using:
 * [Phaser.js](phaser.io)
 * Some code extracted from [Pathfinding.js](https://github.com/qiao/PathFinding.js/)
