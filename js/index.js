@@ -1,8 +1,14 @@
-// import React from 'react';
-// import ReactDOM from 'react-dom';
-// import App from './containers/App';
-//
-// ReactDOM.render(<App />, document.getElementById('main'));
+// so that Object.values and similar es6 stuff works properly
+import values from 'object.values'
+import keys from 'object.keys'
+
+if(!Object.values) {
+  values.shim()
+}
+
+if(!Object.keys) {
+  keys.shim()
+}
 
 import styles from '../css/app.css';
 import 'pixi';
