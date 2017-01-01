@@ -54,7 +54,7 @@ export default class Game {
     this.isCalculatingPath = false;
 
     this.coins = 500
-    this.lives = 2
+    this.lives = 10
 
     this.towerCost = 50
     this.creepKillReward = 30
