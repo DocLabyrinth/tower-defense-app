@@ -1,6 +1,6 @@
 {
-  "name": "tower-defence",
-  "version": "0.1.0",
+  "name": "phaser-2d-tower-defense",
+  "version": "0.0.1",
   "scripts": {
     "start": "DEBUG=true node server.js",
     "build": "webpack -p --config webpack.production.js",
