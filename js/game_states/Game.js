@@ -61,7 +61,6 @@ export default class Game {
   }
 
   preload() {
-    // this.load.image('backgroundTiles', 'images/towerDefense_tilesheet.png');
     this.load.spritesheet(
       'backgroundTiles',
       'images/towerDefense_tilesheet.png',
@@ -82,7 +81,9 @@ export default class Game {
     this.initPromise = findPathAsync(this.exitPoint.x, this.exitPoint.y, this.grid)
     this.initPromise.then((initialGrid) => {
       this.initialised = true
-      this.input.onDown.add(this.clickHandler, this);
+      this.backgroundSprite.inputEnabled = true
+      this.backgroundSprite.input.priorityID = 0
+      this.backgroundSprite.events.onInputDown.add(this.clickHandler, this);
       this.grid = initialGrid
     })
   }
@@ -92,7 +93,6 @@ export default class Game {
   }
 
   update() {
-    // this.moveCreeps()
     this.creepManager.moveCreeps()
     this.towerManager.fireBullets(this.creepManager.spriteGroup)
     this.towerManager.collideBullets(this.creepManager.spriteGroup)
@@ -140,7 +140,7 @@ export default class Game {
     }
   }
 
-  clickHandler(pointer) {
+  clickHandler(sprite, pointer) {
     const {positionDown: {x: clickX, y: clickY}} = pointer
     const gridPos = this.getGridSquare(clickX, clickY)
 
@@ -219,6 +219,48 @@ export default class Game {
     }
   }
 
+  showBuildMenu(targetGridSquare) {
+    this.buildMenuGroup = this.game.add.group(this.game.world, 'buildMenu')
+
+    let base = {
+      x: 250,
+      y: this.world.height - 64
+    }
+
+    let buildLabel = this.add.text(base.x, base.y, 'Build:');
+    buildLabel.align = 'right';
+    buildLabel.font = 'Arial Black';
+    buildLabel.fontSize = 30;
+    buildLabel.fontWeight = 'bold';
+    buildLabel.fill = '#43d637';
+
+    this.buildMenuGroup.add(buildLabel)
+
+    let testButton = this.game.make.button(
+      base.x + 90, base.y,
+      'backgroundTiles',
+      () => {
+
+      },
+      this,
+      36,
+      36
+    )
+    testButton.scale.setTo(0.7, 0.7)
+
+    testButton.input.priorityID = 1
+
+    let priceLabel = this.make.text(testButton.width - 20, testButton.height + 15, 100);
+    priceLabel.fontSize = 19;
+    priceLabel.align = 'right';
+    priceLabel.fill = '#fff';
+    testButton.addChild(priceLabel)
+
+    this.buildMenuGroup.add(testButton)
+
+    this.game.world.bringToTop(this.buildMenuGroup)
+  }
+
   createInitialBackground() {
     this.game.stage.backgroundColor = "#000000"
 
@@ -261,6 +303,6 @@ export default class Game {
       0
     );
 
-    this.game.add.sprite(0, 0, this.backgroundTexture);
+    this.backgroundSprite = this.game.add.sprite(0, 0, this.backgroundTexture);
   }
 }
