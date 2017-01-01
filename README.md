@@ -23,7 +23,7 @@ would result in there being no path from the entrance to the exit.
 
 ## Current status
 
-The game runs in the browser (I only tested on Chrome) and on android devices.
+The game runs in the browser (I only tested on Chrome) and on android devices. Pre-built APKs [are available in the releases section](https://github.com/DocLabyrinth/tower-defense-app/releases/tag/v0.0.1)
 
 #### What works
 
