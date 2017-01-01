@@ -1,12 +1,7 @@
 import Grid from '../vendor/pathfinding/Grid'
 import findPathAsync from '../utils/breadth-first'
-import * as moneyActions from '../actions/money'
-import * as towerActions from '../actions/towers'
-import * as creepActions from '../actions/creeps'
 import * as GameObjectStates from '../constants/GameObjectStates'
 import * as TowerTypes from '../constants/TowerTypes'
-import configureStore from '../store/configureStore'
-import {towerObjKey} from '../reducers/towers'
 import TowerManager from '../game/TowerManager'
 import CreepManager from '../game/CreepManager'
 import range from 'lodash/range'
@@ -31,8 +26,6 @@ export default class Game {
     // this.particles;	//	the particle manager
     // this.physics;	//	the physics manager
     // this.rnd;		//	the repeatable random number generator
-
-    this.store = configureStore()
 
     this.gridW = 16
     this.gridH = 9
